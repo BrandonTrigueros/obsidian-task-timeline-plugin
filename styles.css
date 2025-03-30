@@ -6,3 +6,53 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+.timeline-container {
+	padding: 10px;
+}
+
+.timeline-group {
+	margin-bottom: 20px;
+	border-radius: 5px;
+	padding: 10px;
+	background-color: var(--background-secondary);
+}
+
+.timeline-group-header {
+	margin-top: 0;
+	margin-bottom: 10px;
+	padding-bottom: 5px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	color: var(--text-accent);
+}
+
+.timeline-task {
+	margin-left: 25px;
+	padding: 8px 10px;
+	margin-bottom: 10px;
+	border-radius: 4px;
+	background-color: var(--background-primary);
+	cursor: pointer;
+}
+
+.timeline-task:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.timeline-task-date {
+	font-size: 0.8em;
+	color: var(--text-muted);
+	margin-bottom: 5px;
+	font-weight: bold;
+}
+
+.timeline-task-text {
+	font-size: 1em;
+	margin-bottom: 5px;
+}
+
+.timeline-task-source {
+	font-size: 0.75em;
+	color: var(--text-faint);
+	font-style: italic;
+}
