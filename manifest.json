@@ -4,7 +4,7 @@
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Creates a timeline view of tasks from your notes in the format: Task -> _DD-MMM-YYYY_ #TAG",
-	"author": "Your Name",
-	"authorUrl": "https://github.com/yourusername",
+	"author": "Brandon Trigueros",
+	"authorUrl": "https://github.com/BrandonTrigueros",
 	"isDesktopOnly": false
 }
