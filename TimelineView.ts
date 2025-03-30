@@ -86,6 +86,20 @@ export class TimelineView extends ItemView {
 		return months[monthStr.toLowerCase()] ?? -1;
 	}
 
+	private getTagColor(tag: string): string {
+		let hash = 0;
+		for (let i = 0; i < tag.length; i++) {
+			hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+		}
+		let color = '#';
+		for (let i = 0; i < 3; i++) {
+			const value = (hash >> (i * 8)) & 0xFF;
+			const adjustedValue = 100 + (value % 100);
+			color += adjustedValue.toString(16).padStart(2, '0');
+		}
+		return color;
+	}
+
 	renderTimeline() {
 		const container = this.containerEl.children[1];
 		container.empty();
@@ -105,9 +119,23 @@ export class TimelineView extends ItemView {
 
 		for (const tag in groupedTasks) {
 			const groupContainer = timelineContainer.createDiv({ cls: 'timeline-group' });
-			groupContainer.createEl('h3', { text: tag, cls: 'timeline-group-header' });
+			const tagColor = this.getTagColor(tag);
+
+			const header = groupContainer.createEl('h3', { 
+				text: tag, 
+				cls: 'timeline-group-header' 
+			});
+			header.style.backgroundColor = tagColor;
 
 			const tasksContainer = groupContainer.createDiv({ cls: 'timeline-tasks' });
+			tasksContainer.style.setProperty('--tag-color', tagColor);
+
+			header.addEventListener('click', (e) => {
+				e.stopPropagation();
+				tasksContainer.classList.toggle('collapsed');
+				header.classList.toggle('collapsed');
+			});
+
 			for (const task of groupedTasks[tag]) {
 				const taskEl = tasksContainer.createDiv({ cls: 'timeline-task' });
 				taskEl.createDiv({ cls: 'timeline-task-date', text: this.formatDate(task.date) });

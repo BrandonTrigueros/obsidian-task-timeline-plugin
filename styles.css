@@ -20,30 +20,99 @@ If your plugin does not need CSS, delete this file.
 
 .timeline-group-header {
 	margin-top: 0;
-	margin-bottom: 10px;
-	padding-bottom: 5px;
-	border-bottom: 1px solid var(--background-modifier-border);
-	color: var(--text-accent);
+	margin-bottom: 15px;
+	padding: 8px 12px;
+	border-radius: 5px;
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-size: 1.1em;
+	letter-spacing: 0.5px;
+	cursor: pointer;
+	position: relative;
+}
+
+.timeline-group-header:after {
+	content: '▼';
+	position: absolute;
+	right: 10px;
+	transition: transform 0.3s ease;
+}
+
+.timeline-group-header.collapsed:after {
+	transform: rotate(-90deg);
+}
+
+.timeline-tasks {
+	position: relative;
+	padding-left: 20px;
+}
+
+.timeline-tasks:before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 8px;
+	bottom: 8px;
+	width: 2px;
+	background: var(--text-accent);
+}
+
+.timeline-tasks.collapsed {
+	display: none;
 }
 
 .timeline-task {
+	position: relative;
 	margin-left: 25px;
 	padding: 8px 10px;
 	margin-bottom: 10px;
 	border-radius: 4px;
 	background-color: var(--background-primary);
 	cursor: pointer;
+	transition: all 0.2s ease;
+	border-left: 3px solid var(--text-accent);
+}
+
+.timeline-task:before {
+	content: '';
+	position: absolute;
+	left: -29px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: var(--background-primary);
+	border: 2px solid var(--text-accent);
+	z-index: 1;
+}
+
+.timeline-task:after {
+	content: '';
+	position: absolute;
+	left: -17px;
+	top: 50%;
+	width: 17px;
+	height: 2px;
+	background: var(--text-accent);
+	transform: translateY(-50%);
 }
 
 .timeline-task:hover {
+	transform: translateX(5px);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 	background-color: var(--background-modifier-hover);
 }
 
 .timeline-task-date {
 	font-size: 0.8em;
-	color: var(--text-muted);
-	margin-bottom: 5px;
+	color: var(--text-accent);
+	margin-bottom: 8px;
 	font-weight: bold;
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 4px;
+	background-color: var(--background-secondary);
 }
 
 .timeline-task-text {
