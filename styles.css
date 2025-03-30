@@ -47,14 +47,9 @@ If your plugin does not need CSS, delete this file.
 	padding-left: 20px;
 }
 
+/* Remove the first indent line under the tag */
 .timeline-tasks:before {
-	content: '';
-	position: absolute;
-	left: 0;
-	top: 8px;
-	bottom: 8px;
-	width: 2px;
-	background: var(--text-accent);
+	display: none;
 }
 
 .timeline-tasks.collapsed {
@@ -73,26 +68,18 @@ If your plugin does not need CSS, delete this file.
 	border-left: 3px solid var(--text-accent);
 }
 
+/* Remove the circles on the left of each task */
 .timeline-task:before {
-	content: '';
-	position: absolute;
-	left: -29px;
-	top: 50%;
-	transform: translateY(-50%);
-	width: 12px;
-	height: 12px;
-	border-radius: 50%;
-	background: var(--background-primary);
-	border: 2px solid var(--text-accent);
-	z-index: 1;
+	display: none;
 }
 
+/* Adjust the connector line since we removed the circle */
 .timeline-task:after {
 	content: '';
 	position: absolute;
-	left: -17px;
+	left: -25px;
 	top: 50%;
-	width: 17px;
+	width: 25px;
 	height: 2px;
 	background: var(--text-accent);
 	transform: translateY(-50%);

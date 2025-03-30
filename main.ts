@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, WorkspaceLeaf } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, TFile } from 'obsidian';
 import { TimelineView, VIEW_TYPE_TIMELINE } from './TimelineView';
 
 interface TaskTimelineSettings {
@@ -40,6 +40,31 @@ export default class TaskTimelinePlugin extends Plugin {
 			}
 		});
 
+		// Register events to refresh timeline when changes occur
+		this.registerEvent(
+			this.app.vault.on('modify', (file) => {
+				if (file instanceof TFile && file.extension === 'md') {
+					this.refreshTimeline();
+				}
+			})
+		);
+
+		this.registerEvent(
+			this.app.vault.on('create', (file) => {
+				if (file instanceof TFile && file.extension === 'md') {
+					this.refreshTimeline();
+				}
+			})
+		);
+
+		this.registerEvent(
+			this.app.vault.on('delete', (file) => {
+				if (file instanceof TFile && file.extension === 'md') {
+					this.refreshTimeline();
+				}
+			})
+		);
+
 		this.addSettingTab(new TaskTimelineSettingTab(this.app, this));
 	}
 
@@ -69,6 +94,14 @@ export default class TaskTimelinePlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	// Helper method to refresh the timeline
+	refreshTimeline() {
+		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_TIMELINE);
+		for (const leaf of leaves) {
+			(leaf.view as TimelineView).refresh();
+		}
 	}
 }
 
