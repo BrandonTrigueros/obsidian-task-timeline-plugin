@@ -29,6 +29,7 @@ If your plugin does not need CSS, delete this file.
 	letter-spacing: 0.5px;
 	cursor: pointer;
 	position: relative;
+	user-select: none;
 }
 
 .timeline-group-header:after {
@@ -40,6 +41,14 @@ If your plugin does not need CSS, delete this file.
 
 .timeline-group-header.collapsed:after {
 	transform: rotate(-90deg);
+}
+
+.timeline-group-header[draggable="true"] {
+	cursor: grab;
+}
+
+.timeline-group-header[draggable="true"]:active {
+	cursor: grabbing;
 }
 
 .timeline-tasks {

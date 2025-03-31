@@ -144,7 +144,20 @@ export class TimelineView extends ItemView {
 
 		const timelineContainer = container.createDiv({ cls: 'timeline-container' });
 
-		for (const tag in groupedTasks) {
+		// Sort tags according to saved order
+		const sortedTags = Object.keys(groupedTasks);
+		sortedTags.sort((a, b) => {
+			const indexA = this.plugin.settings.tagOrder.indexOf(a);
+			const indexB = this.plugin.settings.tagOrder.indexOf(b);
+
+			if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+			if (indexA === -1) return 1;
+			if (indexB === -1) return -1;
+			return indexA - indexB;
+		});
+
+		// Render groups in the sorted order
+		for (const tag of sortedTags) {
 			const groupContainer = timelineContainer.createDiv({ cls: 'timeline-group' });
 			const tagColor = this.getTagColor(tag);
 
@@ -174,6 +187,68 @@ export class TimelineView extends ItemView {
 				} else {
 					this.collapsedGroups.delete(tag);
 				}
+			});
+
+			// Add draggable attribute to header
+			header.setAttribute('draggable', 'true');
+
+			// Add drag event listeners
+			header.addEventListener('dragstart', (e) => {
+				if (e.dataTransfer) {
+					e.dataTransfer.setData('text/plain', tag);
+				}
+			});
+
+			header.addEventListener('dragover', (e) => {
+				e.preventDefault();
+			});
+
+			header.addEventListener('drop', (e) => {
+				e.preventDefault();
+				if (!e.dataTransfer) return;
+				const draggedTag = e.dataTransfer.getData('text/plain');
+				if (draggedTag !== tag) {
+					// Update the tag order
+					const newOrder = [...this.plugin.settings.tagOrder];
+					const draggedIndex = newOrder.indexOf(draggedTag);
+					const targetIndex = newOrder.indexOf(tag);
+
+					if (draggedIndex === -1) {
+						newOrder.splice(targetIndex === -1 ? newOrder.length : targetIndex, 0, draggedTag);
+					} else if (targetIndex === -1) {
+						newOrder.splice(draggedIndex, 1);
+						newOrder.push(draggedTag);
+					} else {
+						newOrder.splice(draggedIndex, 1);
+						newOrder.splice(targetIndex, 0, draggedTag);
+					}
+
+					this.plugin.settings.tagOrder = newOrder;
+					this.plugin.saveSettings();
+					this.refresh();
+				}
+			});
+
+			// Add right-click for color selection
+			header.addEventListener('contextmenu', (e) => {
+				e.preventDefault();
+
+				// Create a color picker
+				const colorPicker = document.createElement('input');
+				colorPicker.type = 'color';
+				colorPicker.value = this.getTagColor(tag);
+
+				// When a color is selected, update settings
+				colorPicker.addEventListener('change', () => {
+					const tagName = tag.startsWith('#') ? tag.substring(1) : tag;
+					this.plugin.settings.tagColors[tagName] = colorPicker.value;
+					this.plugin.settings.useCustomColors = true;
+					this.plugin.saveSettings();
+					this.refresh();
+				});
+
+				// Trigger the color picker
+				colorPicker.click();
 			});
 
 			for (const task of groupedTasks[tag]) {

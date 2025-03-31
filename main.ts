@@ -12,6 +12,7 @@ interface TaskTimelineSettings {
 	showCompleted: boolean;
 	refreshInterval: number;
 	showFileNames: boolean;
+	tagOrder: string[]; // Store the order of tags
 }
 
 const DEFAULT_SETTINGS: TaskTimelineSettings = {
@@ -24,7 +25,8 @@ const DEFAULT_SETTINGS: TaskTimelineSettings = {
 	sortOrder: 'date-asc',
 	showCompleted: false,
 	refreshInterval: 5000,
-	showFileNames: true
+	showFileNames: true,
+	tagOrder: [],
 };
 
 export default class TaskTimelinePlugin extends Plugin {
