@@ -44,65 +44,75 @@ If your plugin does not need CSS, delete this file.
 
 .timeline-tasks {
 	position: relative;
-	padding-left: 20px;
-}
-
-/* Remove the first indent line under the tag */
-.timeline-tasks:before {
-	display: none;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+	gap: 15px;
+	padding-top: 10px;
 }
 
 .timeline-tasks.collapsed {
 	display: none;
 }
 
-/* Adjust task margin to utilize full space */
 .timeline-task {
 	position: relative;
-	margin-left: 0; /* Changed from 25px */
-	padding: 8px 10px;
-	margin-bottom: 10px;
-	border-radius: 4px;
+	padding: 12px;
+	border-radius: 8px;
 	background-color: var(--background-primary);
 	cursor: pointer;
 	transition: all 0.2s ease;
-	border-left: 3px solid var(--text-accent);
-}
-
-/* Remove the circles on the left of each task */
-.timeline-task:before {
-	display: none;
-}
-
-/* Remove the horizontal connector line */
-.timeline-task:after {
-	display: none;
+	border-left: 4px solid var(--text-accent);
+	display: flex;
+	flex-direction: column;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .timeline-task:hover {
-	transform: translateX(5px);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	transform: translateY(-3px);
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 	background-color: var(--background-modifier-hover);
+}
+
+.timeline-task-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .timeline-task-date {
 	font-size: 0.8em;
 	color: var(--text-accent);
-	margin-bottom: 8px;
 	font-weight: bold;
-	display: inline-block;
 	padding: 2px 8px;
 	border-radius: 4px;
 	background-color: var(--background-secondary);
 }
 
+.timeline-task-days-left {
+	font-size: 0.8em;
+	color: var(--text-normal);
+	font-weight: bold;
+	padding: 2px 8px;
+	border-radius: 4px;
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
 .timeline-task-text {
 	font-size: 1em;
-	margin-bottom: 5px;
+	margin-bottom: 12px;
+	line-height: 1.4;
+	flex-grow: 1;
 }
 
 .timeline-task-source {
 	font-size: 0.75em;
 	color: var(--text-faint);
 	font-style: italic;
+	margin-top: auto;
+	padding-top: 8px;
+	border-top: 1px solid var(--background-modifier-border);
 }

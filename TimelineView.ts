@@ -9,6 +9,7 @@ interface TimelineTask {
 	tag: string;
 	filePath: string;
 	fileName: string;
+	daysLeft?: number; // Add days left property
 }
 
 export class TimelineView extends ItemView {
@@ -41,6 +42,8 @@ export class TimelineView extends ItemView {
 	async loadTasks() {
 		const markdownFiles = this.app.vault.getMarkdownFiles();
 		const taskRegex = new RegExp(this.plugin.settings.taskRegex, 'g');
+		const today = new Date();
+		today.setHours(0, 0, 0, 0); // Reset time to beginning of day
 
 		for (const file of markdownFiles) {
 			const content = await this.app.vault.cachedRead(file);
@@ -52,13 +55,18 @@ export class TimelineView extends ItemView {
 				const tag = match[3].trim();
 				const date = this.parseDate(dateStr);
 
-				if (date) {
+				if (date && date >= today) { // Only include future tasks
+					// Calculate days left
+					const timeDiff = date.getTime() - today.getTime();
+					const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
 					this.tasks.push({
 						text,
 						date,
 						tag,
 						filePath: file.path,
 						fileName: file.basename,
+						daysLeft
 					});
 				}
 			}
@@ -105,7 +113,7 @@ export class TimelineView extends ItemView {
 		container.empty();
 
 		if (this.tasks.length === 0) {
-			container.createEl('div', { text: 'No tasks found.' });
+			container.createEl('div', { text: 'No future tasks found.' });
 			return;
 		}
 
@@ -138,7 +146,23 @@ export class TimelineView extends ItemView {
 
 			for (const task of groupedTasks[tag]) {
 				const taskEl = tasksContainer.createDiv({ cls: 'timeline-task' });
-				taskEl.createDiv({ cls: 'timeline-task-date', text: this.formatDate(task.date) });
+				
+				// Task header with date and days left
+				const taskHeader = taskEl.createDiv({ cls: 'timeline-task-header' });
+				
+				taskHeader.createDiv({ 
+					cls: 'timeline-task-date', 
+					text: this.formatDate(task.date) 
+				});
+				
+				taskHeader.createDiv({ 
+					cls: 'timeline-task-days-left', 
+					text: task.daysLeft === 0 ? 'Today' : 
+						task.daysLeft === 1 ? 'Tomorrow' : 
+						`${task.daysLeft} days left` 
+				});
+				
+				// Task content
 				taskEl.createDiv({ cls: 'timeline-task-text', text: task.text });
 				taskEl.createDiv({ cls: 'timeline-task-source', text: `From: ${task.fileName}` });
 
