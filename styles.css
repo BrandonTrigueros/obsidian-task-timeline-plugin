@@ -101,6 +101,11 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-on-accent);
 }
 
+.timeline-task-days-left-urgent {
+	background-color: var(--text-error) !important; /* Red color */
+	color: white !important;
+}
+
 .timeline-task-text {
 	font-size: 1em;
 	margin-bottom: 12px;
@@ -115,4 +120,26 @@ If your plugin does not need CSS, delete this file.
 	margin-top: auto;
 	padding-top: 8px;
 	border-top: 1px solid var(--background-modifier-border);
+}
+
+.timeline-task-small {
+	font-size: 0.85em;
+	padding: 8px;
+}
+
+/* Timeline task medium uses default size, no additional styling needed */
+/* .timeline-task-medium {
+} */
+
+.timeline-task-large {
+	font-size: 1.15em;
+	padding: 16px;
+}
+
+.timeline-task-completed {
+	opacity: 0.75;
+}
+
+.timeline-task-completed .timeline-task-text {
+	text-decoration: line-through;
 }

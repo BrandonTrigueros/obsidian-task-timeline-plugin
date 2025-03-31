@@ -9,12 +9,14 @@ interface TimelineTask {
 	tag: string;
 	filePath: string;
 	fileName: string;
-	daysLeft?: number; // Add days left property
+	daysLeft?: number;
+	isCompleted?: boolean;
 }
 
 export class TimelineView extends ItemView {
 	plugin: TaskTimelinePlugin;
 	tasks: TimelineTask[] = [];
+	collapsedGroups: Set<string> = new Set();
 
 	constructor(leaf: WorkspaceLeaf, plugin: TaskTimelinePlugin) {
 		super(leaf);
@@ -43,7 +45,7 @@ export class TimelineView extends ItemView {
 		const markdownFiles = this.app.vault.getMarkdownFiles();
 		const taskRegex = new RegExp(this.plugin.settings.taskRegex, 'g');
 		const today = new Date();
-		today.setHours(0, 0, 0, 0); // Reset time to beginning of day
+		today.setHours(0, 0, 0, 0);
 
 		for (const file of markdownFiles) {
 			const content = await this.app.vault.cachedRead(file);
@@ -54,9 +56,11 @@ export class TimelineView extends ItemView {
 				const dateStr = match[2].trim();
 				const tag = match[3].trim();
 				const date = this.parseDate(dateStr);
+				const isCompleted = text.startsWith('[x]') || text.startsWith('- [x]');
 
-				if (date && date >= today) { // Only include future tasks
-					// Calculate days left
+				if (!this.plugin.settings.showCompleted && isCompleted) continue;
+
+				if (date && date >= today) {
 					const timeDiff = date.getTime() - today.getTime();
 					const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
@@ -66,13 +70,24 @@ export class TimelineView extends ItemView {
 						tag,
 						filePath: file.path,
 						fileName: file.basename,
-						daysLeft
+						daysLeft,
+						isCompleted
 					});
 				}
 			}
 		}
 
-		this.tasks.sort((a, b) => a.date.getTime() - b.date.getTime());
+		switch (this.plugin.settings.sortOrder) {
+			case 'date-asc':
+				this.tasks.sort((a, b) => a.date.getTime() - b.date.getTime());
+				break;
+			case 'date-desc':
+				this.tasks.sort((a, b) => b.date.getTime() - a.date.getTime());
+				break;
+			case 'tag':
+				this.tasks.sort((a, b) => a.tag.localeCompare(b.tag));
+				break;
+		}
 	}
 
 	parseDate(dateStr: string): Date | null {
@@ -95,6 +110,10 @@ export class TimelineView extends ItemView {
 	}
 
 	private getTagColor(tag: string): string {
+		if (this.plugin.settings.useCustomColors) {
+			const tagName = tag.startsWith('#') ? tag.substring(1) : tag;
+			return this.plugin.settings.tagColors[tagName] || this.plugin.settings.defaultTagColor;
+		}
 		let hash = 0;
 		for (let i = 0; i < tag.length; i++) {
 			hash = tag.charCodeAt(i) + ((hash << 5) - hash);
@@ -138,14 +157,33 @@ export class TimelineView extends ItemView {
 			const tasksContainer = groupContainer.createDiv({ cls: 'timeline-tasks' });
 			tasksContainer.style.setProperty('--tag-color', tagColor);
 
+			// Apply collapsed state from saved data
+			if (this.collapsedGroups.has(tag)) {
+				tasksContainer.classList.add('collapsed');
+				header.classList.add('collapsed');
+			}
+
 			header.addEventListener('click', (e) => {
 				e.stopPropagation();
 				tasksContainer.classList.toggle('collapsed');
 				header.classList.toggle('collapsed');
+				
+				// Save collapsed state
+				if (tasksContainer.classList.contains('collapsed')) {
+					this.collapsedGroups.add(tag);
+				} else {
+					this.collapsedGroups.delete(tag);
+				}
 			});
 
 			for (const task of groupedTasks[tag]) {
-				const taskEl = tasksContainer.createDiv({ cls: 'timeline-task' });
+				const taskEl = tasksContainer.createDiv({ 
+					cls: `timeline-task timeline-task-${this.plugin.settings.cardSize}` 
+				});
+				
+				if (task.isCompleted) {
+					taskEl.addClass('timeline-task-completed');
+				}
 				
 				// Task header with date and days left
 				const taskHeader = taskEl.createDiv({ cls: 'timeline-task-header' });
@@ -155,16 +193,21 @@ export class TimelineView extends ItemView {
 					text: this.formatDate(task.date) 
 				});
 				
+				const daysLeft = task.daysLeft ?? Number.MAX_SAFE_INTEGER;
 				taskHeader.createDiv({ 
-					cls: 'timeline-task-days-left', 
-					text: task.daysLeft === 0 ? 'Today' : 
-						task.daysLeft === 1 ? 'Tomorrow' : 
-						`${task.daysLeft} days left` 
+					cls: `timeline-task-days-left ${daysLeft <= 7 ? 'timeline-task-days-left-urgent' : ''}`, 
+					text: daysLeft === 0 ? 'Today' : 
+						daysLeft === 1 ? 'Tomorrow' : 
+						`${daysLeft} days left` 
 				});
 				
 				// Task content
 				taskEl.createDiv({ cls: 'timeline-task-text', text: task.text });
-				taskEl.createDiv({ cls: 'timeline-task-source', text: `From: ${task.fileName}` });
+				
+				// Move file name to after the task content
+				if (this.plugin.settings.showFileNames) {
+					taskEl.createDiv({ cls: 'timeline-task-source', text: `From: ${task.fileName}` });
+				}
 
 				taskEl.addEventListener('click', () => {
 					const file = this.app.vault.getAbstractFileByPath(task.filePath);

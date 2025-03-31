@@ -4,15 +4,32 @@ import { TimelineView, VIEW_TYPE_TIMELINE } from './TimelineView';
 interface TaskTimelineSettings {
 	dateFormat: string;
 	taskRegex: string;
+	useCustomColors: boolean;
+	defaultTagColor: string;
+	tagColors: Record<string, string>;
+	cardSize: 'small' | 'medium' | 'large';
+	sortOrder: 'date-asc' | 'date-desc' | 'tag';
+	showCompleted: boolean;
+	refreshInterval: number;
+	showFileNames: boolean;
 }
 
 const DEFAULT_SETTINGS: TaskTimelineSettings = {
 	dateFormat: 'DD-MMM-YYYY',
-	taskRegex: '(.+?)\\s*->\\s*_([\\d]{1,2}-[A-Za-z]{3}-\\d{4})_\\s*(#[A-Za-z0-9_]+)'
+	taskRegex: '(.+?)\\s*->\\s*_([\\d]{1,2}-[A-Za-z]{3}-\\d{4})_\\s*(#[A-Za-z0-9_]+)',
+	useCustomColors: false,
+	defaultTagColor: '#5a8eee',
+	tagColors: {},
+	cardSize: 'medium',
+	sortOrder: 'date-asc',
+	showCompleted: false,
+	refreshInterval: 5000,
+	showFileNames: true
 };
 
 export default class TaskTimelinePlugin extends Plugin {
 	settings: TaskTimelineSettings;
+	refreshIntervalId: number | null = null;
 
 	async onload() {
 		await this.loadSettings();
@@ -65,10 +82,12 @@ export default class TaskTimelinePlugin extends Plugin {
 			})
 		);
 
+		this.setupAutoRefresh();
 		this.addSettingTab(new TaskTimelineSettingTab(this.app, this));
 	}
 
 	onunload() {
+		this.clearAutoRefresh();
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_TIMELINE);
 	}
 
@@ -103,6 +122,22 @@ export default class TaskTimelinePlugin extends Plugin {
 			(leaf.view as TimelineView).refresh();
 		}
 	}
+
+	setupAutoRefresh() {
+		this.clearAutoRefresh();
+		if (this.settings.refreshInterval > 0) {
+			this.refreshIntervalId = window.setInterval(() => {
+				this.refreshTimeline();
+			}, this.settings.refreshInterval);
+		}
+	}
+
+	clearAutoRefresh() {
+		if (this.refreshIntervalId !== null) {
+			window.clearInterval(this.refreshIntervalId);
+			this.refreshIntervalId = null;
+		}
+	}
 }
 
 class TaskTimelineSettingTab extends PluginSettingTab {
@@ -119,6 +154,7 @@ class TaskTimelineSettingTab extends PluginSettingTab {
 
 		containerEl.createEl('h2', { text: 'Task Timeline Settings' });
 
+		// Basic Settings
 		new Setting(containerEl)
 			.setName('Date format')
 			.setDesc('Format used to parse dates in your tasks')
@@ -138,6 +174,91 @@ class TaskTimelineSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.taskRegex)
 				.onChange(async (value) => {
 					this.plugin.settings.taskRegex = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Show file names')
+			.setDesc('Display the source file name for each task')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.showFileNames)
+				.onChange(async (value) => {
+					this.plugin.settings.showFileNames = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Display Settings
+		containerEl.createEl('h3', { text: 'Display Settings' });
+
+		new Setting(containerEl)
+			.setName('Card size')
+			.setDesc('Set the size of task cards')
+			.addDropdown(dropdown => dropdown
+				.addOption('small', 'Small')
+				.addOption('medium', 'Medium')
+				.addOption('large', 'Large')
+				.setValue(this.plugin.settings.cardSize)
+				.onChange(async (value) => {
+					this.plugin.settings.cardSize = value as 'small' | 'medium' | 'large';
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Sort order')
+			.setDesc('How to sort tasks in the timeline')
+			.addDropdown(dropdown => dropdown
+				.addOption('date-asc', 'Date (earliest first)')
+				.addOption('date-desc', 'Date (latest first)')
+				.addOption('tag', 'By tag')
+				.setValue(this.plugin.settings.sortOrder)
+				.onChange(async (value) => {
+					this.plugin.settings.sortOrder = value as 'date-asc' | 'date-desc' | 'tag';
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Show completed tasks')
+			.setDesc('Include tasks that are marked as completed')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.showCompleted)
+				.onChange(async (value) => {
+					this.plugin.settings.showCompleted = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Auto-refresh interval')
+			.setDesc('How often the timeline should refresh (in seconds, 0 to disable)')
+			.addSlider(slider => slider
+				.setLimits(0, 60, 5)
+				.setValue(this.plugin.settings.refreshInterval / 1000)
+				.setDynamicTooltip()
+				.onChange(async (value) => {
+					this.plugin.settings.refreshInterval = value * 1000;
+					await this.plugin.saveSettings();
+					this.plugin.setupAutoRefresh();
+				}));
+
+		// Color Settings
+		containerEl.createEl('h3', { text: 'Color Settings' });
+
+		new Setting(containerEl)
+			.setName('Use custom colors')
+			.setDesc('Use custom colors for tags instead of auto-generated ones')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.useCustomColors)
+				.onChange(async (value) => {
+					this.plugin.settings.useCustomColors = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Default tag color')
+			.setDesc('The color to use for tags without a custom color')
+			.addColorPicker(color => color
+				.setValue(this.plugin.settings.defaultTagColor)
+				.onChange(async (value) => {
+					this.plugin.settings.defaultTagColor = value;
 					await this.plugin.saveSettings();
 				}));
 	}
