@@ -56,9 +56,10 @@ If your plugin does not need CSS, delete this file.
 	display: none;
 }
 
+/* Adjust task margin to utilize full space */
 .timeline-task {
 	position: relative;
-	margin-left: 25px;
+	margin-left: 0; /* Changed from 25px */
 	padding: 8px 10px;
 	margin-bottom: 10px;
 	border-radius: 4px;
@@ -73,16 +74,9 @@ If your plugin does not need CSS, delete this file.
 	display: none;
 }
 
-/* Adjust the connector line since we removed the circle */
+/* Remove the horizontal connector line */
 .timeline-task:after {
-	content: '';
-	position: absolute;
-	left: -25px;
-	top: 50%;
-	width: 25px;
-	height: 2px;
-	background: var(--text-accent);
-	transform: translateY(-50%);
+	display: none;
 }
 
 .timeline-task:hover {
