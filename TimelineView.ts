@@ -11,6 +11,7 @@ interface TimelineTask {
 	fileName: string;
 	daysLeft?: number;
 	isCompleted?: boolean;
+	isOverdue?: boolean; // Added to track overdue tasks
 }
 
 export class TimelineView extends ItemView {
@@ -60,9 +61,10 @@ export class TimelineView extends ItemView {
 
 				if (!this.plugin.settings.showCompleted && isCompleted) continue;
 
-				if (date && date >= today) {
+				if (date) {
 					const timeDiff = date.getTime() - today.getTime();
 					const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+					const isOverdue = daysLeft < 0; // Determine if the task is overdue
 
 					this.tasks.push({
 						text,
@@ -71,7 +73,8 @@ export class TimelineView extends ItemView {
 						filePath: file.path,
 						fileName: file.basename,
 						daysLeft,
-						isCompleted
+						isCompleted,
+						isOverdue // Add overdue status to the task
 					});
 				}
 			}
@@ -270,8 +273,9 @@ export class TimelineView extends ItemView {
 				
 				const daysLeft = task.daysLeft ?? Number.MAX_SAFE_INTEGER;
 				taskHeader.createDiv({ 
-					cls: `timeline-task-days-left ${daysLeft <= 7 ? 'timeline-task-days-left-urgent' : ''}`, 
-					text: daysLeft === 0 ? 'Today' : 
+					cls: `timeline-task-days-left ${(daysLeft <= 7 || task.isOverdue) ? 'timeline-task-days-left-urgent' : ''}`, 
+					text: task.isOverdue ? 'Overdue' : // Display "Overdue" for overdue tasks
+						daysLeft === 0 ? 'Today' : 
 						daysLeft === 1 ? 'Tomorrow' : 
 						`${daysLeft} days left` 
 				});
