@@ -42,43 +42,16 @@ export class TimelineView extends ItemView {
 		this.renderTimeline();
 	}
 
-	/**
-	 * Loads tasks from the user's notes and organizes them into a timeline view.
-	 */
 	async loadTasks() {
-		try {
-			const notes = await this.getNotes();
-			const tasks = this.extractTasks(notes);
-			this.tasks = tasks;
-		} catch (error) {
-			console.error("Error loading tasks:", error);
-		}
-	}
-
-	/**
-	 * Retrieves all notes from the vault.
-	 */
-	private async getNotes(): Promise<string[]> {
 		const markdownFiles = this.app.vault.getMarkdownFiles();
-		const notes: string[] = [];
-		for (const file of markdownFiles) {
-			const content = await this.app.vault.cachedRead(file);
-			notes.push(content);
-		}
-		return notes;
-	}
-
-	/**
-	 * Extracts tasks from the given notes using the configured regex.
-	 */
-	private extractTasks(notes: string[]): TimelineTask[] {
 		const taskRegex = new RegExp(this.plugin.settings.taskRegex, 'g');
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
 
-		const tasks: TimelineTask[] = [];
-		for (const content of notes) {
+		for (const file of markdownFiles) {
+			const content = await this.app.vault.cachedRead(file);
 			let match;
+
 			while ((match = taskRegex.exec(content)) !== null) {
 				const text = match[1].trim();
 				const dateStr = match[2].trim();
@@ -93,12 +66,12 @@ export class TimelineView extends ItemView {
 					const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
 					const isOverdue = daysLeft < 0; // Determine if the task is overdue
 
-					tasks.push({
+					this.tasks.push({
 						text,
 						date,
 						tag,
-						filePath: '', // File path is not available in this context
-						fileName: '', // File name is not available in this context
+						filePath: file.path,
+						fileName: file.basename,
 						daysLeft,
 						isCompleted,
 						isOverdue // Add overdue status to the task
@@ -109,17 +82,15 @@ export class TimelineView extends ItemView {
 
 		switch (this.plugin.settings.sortOrder) {
 			case 'date-asc':
-				tasks.sort((a, b) => a.date.getTime() - b.date.getTime());
+				this.tasks.sort((a, b) => a.date.getTime() - b.date.getTime());
 				break;
 			case 'date-desc':
-				tasks.sort((a, b) => b.date.getTime() - a.date.getTime());
+				this.tasks.sort((a, b) => b.date.getTime() - a.date.getTime());
 				break;
 			case 'tag':
-				tasks.sort((a, b) => a.tag.localeCompare(b.tag));
+				this.tasks.sort((a, b) => a.tag.localeCompare(b.tag));
 				break;
 		}
-
-		return tasks;
 	}
 
 	parseDate(dateStr: string): Date | null {
