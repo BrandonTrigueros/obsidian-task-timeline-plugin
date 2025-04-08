@@ -110,9 +110,18 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-on-accent);
 }
 
+/* For tasks due within 7 days - softer amber color */
+.timeline-task-days-left-soon {
+	background-color: rgba(255, 204, 0, 0.7) !important; /* More transparent amber */
+	color: var(--text-normal) !important; /* Use theme text color instead of hard-coded */
+	border: 1px solid rgba(255, 204, 0, 0.3) !important; /* Subtle border */
+}
+
+/* Overdue tasks - softer red */
 .timeline-task-days-left-urgent {
-	background-color: var(--text-error) !important; /* Red color */
-	color: white !important;
+	background-color: rgba(220, 75, 75, 0.7) !important; /* Softer red with transparency */
+	color: var(--text-on-accent) !important; /* Use theme variable */
+	border: 1px solid rgba(220, 75, 75, 0.3) !important; /* Subtle border */
 }
 
 .timeline-task-text {

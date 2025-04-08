@@ -16,32 +16,34 @@ Create a beautiful timeline view of your tasks across your notes. Organize and v
 
 1. **Formatting Tasks**
 
-  Add tasks to your notes using the format: `Task description -> DD-MMM-YYYY #Tag`
+   Add tasks to your notes using the format: `Task description -> DD-MMM-YYYY #Tag`
 
-  Examples:
-  ```markdown
-  Write plugin documentation -> 15-Oct-2023 #Work
-  Submit report -> 10-Oct-2023 #Finance
-  Schedule team meeting -> 20-Oct-2023 #Work #Important
-  ```
+   Examples:
 
-  The task format requires:
-  - A description 
-  - An arrow `->` followed by a date
-  - Tags with `#` prefix
+   ```markdown
+   Write plugin documentation -> 15-Oct-2023 #Work
+   Submit report -> 10-Oct-2023 #Finance
+   Schedule team meeting -> 20-Oct-2023 #Work #Important
+   ```
+
+   The task format requires:
+  
+   - A description
+   - An arrow `->` followed by a date
+   - Tags with `#` prefix
 
 2. **Timeline Interaction**
 
-When viewing your timeline, you can:
+   When viewing your timeline, you can:
 
-**Hotkeys & Actions:**
+   **Hotkeys & Actions:**
 
-| Hotkey                      | Action                            |
-|-----------------------------|-----------------------------------|
-| Click on a task             | Open the source file              |
-| Click on a tag header       | Expand/Collapse the tag group     |
-| Drag a tag header           | Reorder tag groups                |
-| Right-click on a tag header | Choose a custom tag color         |
+   | Hotkey                      | Action                            |
+   |-----------------------------|-----------------------------------|
+   | Click on a task             | Open the source file              |
+   | Click on a tag header       | Expand/Collapse the tag group     |
+   | Drag a tag header           | Reorder tag groups                |
+   | Right-click on a tag header | Choose a custom tag color         |
 
 ## How to Install
 
@@ -53,7 +55,6 @@ When viewing your timeline, you can:
 4. Search for **Task Timeline**
 5. Click **Install**
 6. Close the plugins window and enable **Task Timeline**
-
 
 ## Demo
 
@@ -74,5 +75,6 @@ _This plugin is still experimental. Please make backups of your notes before usi
 ---
 
 Feel free to file issues or contribute on GitHub:
+
 - [Issues](https://github.com/BrandonTrigueros/obsidian-task-timeline-plugin/issues)
 - [Pull Requests](https://github.com/BrandonTrigueros/obsidian-task-timeline-plugin/pulls)

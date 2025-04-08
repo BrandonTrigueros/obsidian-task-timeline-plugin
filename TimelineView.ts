@@ -273,7 +273,10 @@ export class TimelineView extends ItemView {
 				
 				const daysLeft = task.daysLeft ?? Number.MAX_SAFE_INTEGER;
 				taskHeader.createDiv({ 
-					cls: `timeline-task-days-left ${(daysLeft <= 7 || task.isOverdue) ? 'timeline-task-days-left-urgent' : ''}`, 
+					cls: `timeline-task-days-left ${
+						task.isOverdue ? 'timeline-task-days-left-urgent' : 
+						daysLeft <= 7 ? 'timeline-task-days-left-soon' : ''
+					}`, 
 					text: task.isOverdue ? 'Overdue' : // Display "Overdue" for overdue tasks
 						daysLeft === 0 ? 'Today' : 
 						daysLeft === 1 ? 'Tomorrow' : 
