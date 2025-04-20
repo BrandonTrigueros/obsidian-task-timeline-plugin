@@ -1,4 +1,4 @@
-import { ItemView, TFile, WorkspaceLeaf } from 'obsidian';
+import { ItemView, TFile, WorkspaceLeaf, Modal } from 'obsidian';
 import TaskTimelinePlugin from './main';
 
 export const VIEW_TYPE_TIMELINE = 'task-timeline-view';
@@ -11,7 +11,11 @@ interface TimelineTask {
 	fileName: string;
 	daysLeft?: number;
 	isCompleted?: boolean;
-	isOverdue?: boolean; // Added to track overdue tasks
+	isOverdue?: boolean;
+	position: { 
+		start: { line: number, col: number, offset: number },
+		end: { line: number, col: number, offset: number }
+	};
 }
 
 export class TimelineView extends ItemView {
@@ -64,8 +68,23 @@ export class TimelineView extends ItemView {
 				if (date) {
 					const timeDiff = date.getTime() - today.getTime();
 					const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
-					const isOverdue = daysLeft < 0; // Determine if the task is overdue
-
+					const isOverdue = daysLeft < 0;
+					
+					// Calculate position information
+					const matchStart = match.index;
+					const matchEnd = matchStart + match[0].length;
+					
+					// Calculate line and column positions
+					let line = 0;
+					let lastNewLine = -1;
+					for (let i = 0; i < matchStart; i++) {
+						if (content[i] === '\n') {
+							line++;
+							lastNewLine = i;
+						}
+					}
+					const col = matchStart - lastNewLine - 1;
+					
 					this.tasks.push({
 						text,
 						date,
@@ -74,7 +93,11 @@ export class TimelineView extends ItemView {
 						fileName: file.basename,
 						daysLeft,
 						isCompleted,
-						isOverdue // Add overdue status to the task
+						isOverdue,
+						position: {
+							start: { line, col, offset: matchStart },
+							end: { line, col: col + match[0].length, offset: matchEnd }
+						}
 					});
 				}
 			}
@@ -139,6 +162,15 @@ export class TimelineView extends ItemView {
 			return;
 		}
 
+		// Choose rendering method based on view mode
+		if (this.plugin.settings.viewMode === 'calendar') {
+			this.renderCalendarView(container as HTMLElement);
+		} else {
+			this.renderTimelineView(container as HTMLElement);
+		}
+	}
+
+	renderTimelineView(container: HTMLElement) {
 		const groupedTasks: Record<string, TimelineTask[]> = {};
 		for (const task of this.tasks) {
 			if (!groupedTasks[task.tag]) groupedTasks[task.tag] = [];
@@ -277,7 +309,7 @@ export class TimelineView extends ItemView {
 						task.isOverdue ? 'timeline-task-days-left-urgent' : 
 						daysLeft <= 7 ? 'timeline-task-days-left-soon' : ''
 					}`, 
-					text: task.isOverdue ? 'Overdue' : // Display "Overdue" for overdue tasks
+					text: task.isOverdue ? 'Overdue' : 
 						daysLeft === 0 ? 'Today' : 
 						daysLeft === 1 ? 'Tomorrow' : 
 						`${daysLeft} days left` 
@@ -294,11 +326,258 @@ export class TimelineView extends ItemView {
 				taskEl.addEventListener('click', () => {
 					const file = this.app.vault.getAbstractFileByPath(task.filePath);
 					if (file instanceof TFile) {
-						this.app.workspace.getLeaf().openFile(file);
+						this.app.workspace.getLeaf().openFile(file, {
+							eState: {
+								line: task.position.start.line,
+								focus: true
+							}
+						});
 					}
 				});
 			}
 		}
+	}
+
+	renderCalendarView(container: HTMLElement) {
+		const calendarContainer = container.createDiv({ cls: 'calendar-container' });
+		
+		// Group tasks by date
+		const tasksByDate: Record<string, TimelineTask[]> = {};
+		const dateSet = new Set<string>();
+		
+		for (const task of this.tasks) {
+			const dateKey = this.formatDateKey(task.date);
+			if (!tasksByDate[dateKey]) tasksByDate[dateKey] = [];
+			tasksByDate[dateKey].push(task);
+			dateSet.add(dateKey);
+		}
+		
+		// Find the month range
+		const dates = Array.from(dateSet).map(d => this.parseDateKey(d)).sort((a, b) => a.getTime() - b.getTime());
+		if (dates.length === 0) {
+			calendarContainer.createEl('div', { text: 'No tasks found for any dates.' });
+			return;
+		}
+		
+		const firstDate = dates[0];
+		const lastDate = dates[dates.length - 1];
+		
+		// Generate months between first and last date
+		const months = this.getMonthsBetween(firstDate, lastDate);
+		
+		// Controls for the calendar
+		const controlsContainer = calendarContainer.createDiv({ cls: 'calendar-controls' });
+		controlsContainer.createEl('button', {
+			text: 'Today',
+			cls: 'calendar-today-button',
+		}).addEventListener('click', () => {
+			// Find today's month view and scroll to it
+			const today = new Date();
+			const monthKey = `${today.getFullYear()}-${today.getMonth()}`;
+			const monthElement = calendarContainer.querySelector(`[data-month-key="${monthKey}"]`);
+			if (monthElement) {
+				monthElement.scrollIntoView({ behavior: 'smooth' });
+			}
+		});
+		
+		// Render each month
+		for (const month of months) {
+			this.renderMonth(calendarContainer, month, tasksByDate);
+		}
+	}
+
+	private formatDateKey(date: Date): string {
+		return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+	}
+
+	private parseDateKey(dateKey: string): Date {
+		const [year, month, day] = dateKey.split('-').map(n => parseInt(n, 10));
+		return new Date(year, month, day);
+	}
+
+	private getMonthsBetween(startDate: Date, endDate: Date): {year: number, month: number}[] {
+		const months: {year: number, month: number}[] = [];
+		const currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+		
+		while (currentDate <= endDate) {
+			months.push({
+				year: currentDate.getFullYear(),
+				month: currentDate.getMonth()
+			});
+			currentDate.setMonth(currentDate.getMonth() + 1);
+		}
+		
+		return months;
+	}
+
+	private renderMonth(container: HTMLElement, month: {year: number, month: number}, tasksByDate: Record<string, TimelineTask[]>) {
+		const monthContainer = container.createDiv({
+			cls: 'calendar-month',
+			attr: {
+				'data-month-key': `${month.year}-${month.month}`
+			}
+		});
+		
+		const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+							 'July', 'August', 'September', 'October', 'November', 'December'];
+							 
+		// Month header
+		monthContainer.createEl('h3', {
+			text: `${monthNames[month.month]} ${month.year}`,
+			cls: 'calendar-month-header'
+		});
+		
+		// Create the grid for days
+		const calendarGrid = monthContainer.createDiv({ cls: 'calendar-grid' });
+		
+		// Day headers (Sun, Mon, etc)
+		const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+		for (const dayName of dayNames) {
+			calendarGrid.createDiv({ 
+				cls: 'calendar-day-header',
+				text: dayName
+			});
+		}
+		
+		// Get the first day of the month and the total days in month
+		const firstDay = new Date(month.year, month.month, 1);
+		const lastDay = new Date(month.year, month.month + 1, 0);
+		const daysInMonth = lastDay.getDate();
+		
+		// Add empty cells for days before the start of the month
+		for (let i = 0; i < firstDay.getDay(); i++) {
+			calendarGrid.createDiv({ cls: 'calendar-day calendar-day-empty' });
+		}
+		
+		// Add days of the month
+		for (let day = 1; day <= daysInMonth; day++) {
+			const date = new Date(month.year, month.month, day);
+			const dateKey = this.formatDateKey(date);
+			const tasksForDay = tasksByDate[dateKey] || [];
+			
+			const dayCell = calendarGrid.createDiv({
+				cls: `calendar-day ${tasksForDay.length > 0 ? 'calendar-day-has-tasks' : ''}`,
+			});
+			
+			// Day number
+			dayCell.createDiv({
+				cls: 'calendar-day-number',
+				text: day.toString()
+			});
+			
+			// If there are tasks, show them
+			if (tasksForDay.length > 0) {
+				const dayTasksContainer = dayCell.createDiv({ cls: 'calendar-day-tasks' });
+				
+				for (const task of tasksForDay.slice(0, 3)) { // Show up to 3 tasks
+					const taskEl = dayTasksContainer.createDiv({ cls: 'calendar-task' });
+					
+					if (task.isCompleted) {
+						taskEl.addClass('calendar-task-completed');
+					}
+					
+					taskEl.createDiv({
+						cls: 'calendar-task-text',
+						text: task.text
+					});
+					
+					taskEl.addEventListener('click', (e) => {
+						e.stopPropagation(); // Prevent the day cell click from triggering
+						const file = this.app.vault.getAbstractFileByPath(task.filePath);
+						if (file instanceof TFile) {
+							this.app.workspace.getLeaf().openFile(file, {
+								eState: {
+									line: task.position.start.line,
+									focus: true
+								}
+							});
+						}
+					});
+				}
+				
+				// If there are more tasks than we're showing
+				if (tasksForDay.length > 3) {
+					dayTasksContainer.createDiv({
+						cls: 'calendar-more-tasks',
+						text: `+${tasksForDay.length - 3} more`
+					}).addEventListener('click', (e) => {
+						// Show a modal with all tasks for this day
+						e.stopPropagation(); // Prevent the day cell click from triggering
+						this.showTasksForDay(date, tasksForDay);
+					});
+				}
+				
+				// Add click event to the entire day cell to show all tasks
+				dayCell.addEventListener('click', () => {
+					this.showTasksForDay(date, tasksForDay);
+				});
+			}
+			
+			// Mark today
+			const today = new Date();
+			if (day === today.getDate() && 
+				month.month === today.getMonth() && 
+				month.year === today.getFullYear()) {
+				dayCell.addClass('calendar-day-today');
+			}
+		}
+		
+		// Fill in remaining cells
+		const lastDayOfWeek = lastDay.getDay();
+		for (let i = lastDayOfWeek + 1; i <= 6; i++) {
+			calendarGrid.createDiv({ cls: 'calendar-day calendar-day-empty' });
+		}
+	}
+
+	private showTasksForDay(date: Date, tasks: TimelineTask[]) {
+		const modal = new Modal(this.app);
+		const { contentEl } = modal;
+
+		contentEl.createEl("h2", { text: `Tasks for ${this.formatDate(date)}` });
+		
+		const taskListEl = contentEl.createDiv({ cls: "calendar-modal-task-list" });
+		
+		for (const task of tasks) {
+			const taskEl = taskListEl.createDiv({ cls: "calendar-modal-task" });
+			
+			if (task.isCompleted) {
+				taskEl.addClass("calendar-modal-task-completed");
+			}
+			
+			taskEl.createDiv({ 
+				cls: "calendar-modal-task-text",
+				text: task.text
+			});
+			
+			// Add tag pill
+			const tagEl = taskEl.createDiv({ 
+				cls: "calendar-modal-task-tag",
+				text: task.tag
+			});
+			tagEl.style.backgroundColor = this.getTagColor(task.tag);
+			
+			if (this.plugin.settings.showFileNames) {
+				taskEl.createDiv({ 
+					cls: "calendar-modal-task-source",
+					text: `From: ${task.fileName}`
+				});
+			}
+			
+			taskEl.addEventListener("click", () => {
+				const file = this.app.vault.getAbstractFileByPath(task.filePath);
+				if (file instanceof TFile) {
+					modal.close();
+					this.app.workspace.getLeaf().openFile(file, {
+						eState: {
+							line: task.position.start.line,
+							focus: true
+						}
+					});
+				}
+			});
+		}
+		
+		modal.open();
 	}
 
 	formatDate(date: Date): string {

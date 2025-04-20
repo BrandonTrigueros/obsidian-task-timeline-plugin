@@ -161,3 +161,245 @@ If your plugin does not need CSS, delete this file.
 .timeline-task-completed .timeline-task-text {
 	text-decoration: line-through;
 }
+
+/* Calendar View Styles */
+.calendar-container {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.calendar-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+.calendar-today-button {
+    padding: 6px 12px;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.calendar-month {
+    margin-bottom: 30px;
+}
+
+.calendar-month-header {
+    margin-bottom: 10px;
+    font-size: 1.5em;
+    color: var(--text-accent);
+    text-align: center;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 5px;
+}
+
+.calendar-day-header {
+    padding: 5px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Enhanced Calendar Day Styling */
+.calendar-day {
+    min-height: 110px;
+    padding: 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background-color: var(--background-primary);
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-day-empty {
+    background-color: var(--background-secondary-alt);
+}
+
+.calendar-day-today {
+    box-shadow: 0 0 0 2px var(--text-accent);
+    background-color: var(--background-primary-alt);
+}
+
+.calendar-day-has-tasks {
+    background-color: var(--background-primary-alt);
+    cursor: pointer;
+    border: 1px solid var(--background-modifier-border-hover);
+}
+
+.calendar-day-has-tasks:hover {
+    background-color: var(--background-secondary);
+    border-color: var(--text-accent);
+    transform: translateY(-2px);
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-day-number {
+    font-weight: bold;
+    margin-bottom: 8px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background-color: var(--background-secondary-alt);
+    display: inline-block;
+    min-width: 24px;
+    text-align: center;
+}
+
+.calendar-day-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-grow: 1;
+}
+
+/* Improved Task Styling */
+.calendar-task {
+    padding: 5px 8px;
+    border-radius: 4px;
+    background-color: var(--background-secondary);
+    font-size: 0.85em;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.3em;
+    max-height: 2.6em;
+    border-left: 3px solid var(--text-accent);
+    margin-bottom: 1px; /* Tiny space between stacked tasks */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.calendar-task:hover {
+    background-color: var(--interactive-hover);
+    transform: translateX(2px);
+    transition: all 0.2s ease;
+}
+
+.calendar-task-completed {
+    opacity: 0.7;
+    text-decoration: line-through;
+    border-left-color: var(--text-faint);
+}
+
+.calendar-more-tasks {
+    font-size: 0.8em;
+    color: var(--text-accent);
+    cursor: pointer;
+    text-align: center;
+    padding: 2px 0;
+    font-weight: bold;
+    background-color: var(--background-secondary-alt);
+    border-radius: 3px;
+    margin-top: 2px;
+}
+
+.calendar-more-tasks:hover {
+    background-color: var(--interactive-hover);
+    color: var(--text-on-accent);
+}
+
+/* Modal task list */
+.calendar-modal-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.calendar-modal-task {
+    padding: 10px;
+    border-radius: 5px;
+    background-color: var(--background-primary);
+    border-left: 3px solid var(--text-accent);
+    cursor: pointer;
+}
+
+.calendar-modal-task:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.calendar-modal-task-completed {
+    opacity: 0.7;
+}
+
+.calendar-modal-task-completed .calendar-modal-task-text {
+    text-decoration: line-through;
+}
+
+.calendar-modal-task-text {
+    margin-bottom: 5px;
+}
+
+.calendar-modal-task-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    color: var(--text-on-accent);
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
+.calendar-modal-task-source {
+    font-size: 0.8em;
+    color: var(--text-faint);
+}
+
+/* Responsive calendar for mobile */
+@media screen and (max-width: 800px) {
+    .calendar-grid {
+        gap: 2px;
+    }
+    
+    .calendar-day {
+        min-height: 70px;
+        padding: 4px;
+    }
+    
+    .calendar-day-number {
+        margin-bottom: 4px;
+        font-size: 0.9em;
+    }
+    
+    .calendar-task {
+        padding: 3px 5px;
+        font-size: 0.75em;
+        -webkit-line-clamp: 1;
+        line-clamp: 1;
+    }
+}
+
+/* Settings styles */
+.settings-header {
+    margin-top: 24px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    color: var(--text-accent);
+    font-size: 1.25em;
+}
+
+.task-format-example {
+    display: block;
+    background-color: var(--background-secondary);
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-top: 8px;
+    margin-bottom: 12px;
+    font-family: var(--font-monospace);
+    white-space: pre-wrap;
+    word-break: break-all;
+}

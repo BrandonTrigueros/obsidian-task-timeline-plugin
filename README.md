@@ -5,6 +5,7 @@ Create a beautiful timeline view of your tasks across your notes. Organize and v
 ## Features
 
 - **Timeline View**: Visualize tasks sorted by date and grouped by tag.
+- **Calendar View**: See tasks in a monthly calendar format for better date-based planning.
 - **Custom Date Parsing**: Parse dates using a configurable format (default: `DD-MMM-YYYY`).
 - **Task Grouping**: Automatically groups tasks by tag with expandable/collapsible groups.
 - **Color Customization**: Use auto-generated or custom colors for tag groups.
